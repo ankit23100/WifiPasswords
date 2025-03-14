@@ -1,21 +1,22 @@
 import subprocess
 import streamlit as st
 import platform
+import os
 
 def get_wifi_profiles():
     """Fetch all Wi-Fi profiles (Windows only)."""
-    if platform.system() == "Windows":
+    if platform.system() == "Windows" and not os.environ.get("STREAMLIT_RUNTIME"):
         try:
             data = subprocess.check_output(['netsh', 'wlan', 'show', 'profiles'], stderr=subprocess.DEVNULL).decode('utf-8', errors="ignore").split('\n')
             return [i.split(":")[1].strip() for i in data if "All User Profile" in i]
         except subprocess.CalledProcessError as e:
             return [("Error fetching profiles", str(e))]
     else:
-        return []
+        return []  # No profiles for non-Windows or Streamlit Cloud
 
 def get_wifi_password(profile):
     """Fetch Wi-Fi password for a given profile (Windows only)."""
-    if platform.system() == "Windows":
+    if platform.system() == "Windows" and not os.environ.get("STREAMLIT_RUNTIME"):
         try:
             results = subprocess.check_output(['netsh', 'wlan', 'show', 'profile', profile, 'key=clear'], stderr=subprocess.DEVNULL).decode('utf-8', errors="ignore").split('\n')
             passwords = [b.split(":")[1].strip() for b in results if "Key Content" in b]
@@ -28,7 +29,7 @@ def get_wifi_password(profile):
 st.title("🔐 Wi-Fi Profiles and Passwords Viewer")
 st.write("This application retrieves and displays saved Wi-Fi profiles and their passwords (Windows Only).")
 
-if platform.system() != "Windows":
+if platform.system() != "Windows" or os.environ.get("STREAMLIT_RUNTIME"):
     st.error("This app only works on Windows systems.")
 else:
     if st.button("Show Wi-Fi Profiles"):
